@@ -192,7 +192,13 @@ async def run_scrape_job_async(job_id: int, keywords: list, limit: int, fresh: b
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 headless=headless,
-                args=["--disable-blink-features=AutomationControlled"]
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--single-process",
+                ]
             )
             context = await browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -254,7 +260,6 @@ async def run_scrape_job_async(job_id: int, keywords: list, limit: int, fresh: b
                         print(f"[{found_with_emails}/{limit} emails] Scraping: {handle}")
                         profile_data = await scrape_profile(page, handle)
 
-                        # Check blocklist
                         if profile_data["email"] and profile_data["email"].lower() in email_blocklist:
                             print(f"Skipping {profile_data['email']} - in blocklist")
                             profile_data["email"] = None
@@ -278,7 +283,6 @@ async def run_scrape_job_async(job_id: int, keywords: list, limit: int, fresh: b
                     print(f"[{i+1}/{len(handles)}] Scraping: {handle}")
                     profile_data = await scrape_profile(page, handle)
 
-                    # Check blocklist
                     if profile_data["email"] and profile_data["email"].lower() in email_blocklist:
                         print(f"Skipping {profile_data['email']} - in blocklist")
                         profile_data["email"] = None
