@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PinPanda Beta</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E60023;
+    --bg: #FAFAFA;
+    --grey-light: #E3E3E3;
+    --grey-mid: #4B4B4B;
+    --black: #171719;
+    --white: #FFFFFF;
+    --success: #22C55E;
+    --radius: 10px;
+    --sw: 224px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--black); min-height: 100vh; display: flex; }
+  .sidebar { width: var(--sw); min-height: 100vh; background: var(--white); border-right: 1px solid var(--grey-light); display: flex; flex-direction: column; padding: 28px 16px; position: fixed; top: 0; left: 0; bottom: 0; }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 36px; padding: 0 6px; text-decoration: none; cursor: pointer; }
+  .logo-text { font-size: 17px; font-weight: 700; color: var(--black); letter-spacing: -0.3px; }
+  .logo-text em { color: var(--red); font-style: normal; }
+  .logo-text .beta { font-size: 10px; color: var(--grey-mid); font-weight: 400; margin-left: 4px; }
+  .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--grey-mid); margin-bottom: 6px; padding: 0 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--grey-mid); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.12s; text-decoration: none; margin-bottom: 2px; }
+  .nav-item:hover { background: var(--bg); color: var(--black); }
+  .nav-item.active { background: #FFF0F2; color: var(--red); font-weight: 600; }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .sidebar-bottom { margin-top: auto; border-top: 1px solid var(--grey-light); padding-top: 16px; }
+  .credits-badge { background: var(--bg); border: 1px solid var(--grey-light); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .credits-top { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+  .credits-label { font-size: 11px; color: var(--grey-mid); }
+  .credits-amount { font-size: 22px; font-weight: 700; color: var(--black); line-height: 1; }
+  .credits-amount span { font-size: 12px; font-weight: 400; color: var(--grey-mid); }
+  .credits-bar { height: 4px; background: var(--grey-light); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .credits-bar-fill { height: 100%; width: 100%; background: var(--red); border-radius: 2px; }
+  .user-row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: 8px; }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--red); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .user-name { font-size: 13px; font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .user-plan { font-size: 11px; color: var(--grey-mid); }
+
+  .main { margin-left: var(--sw); flex: 1; padding: 40px 44px; max-width: calc(100% - var(--sw)); }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
+  .page-header p { font-size: 13.5px; color: var(--grey-mid); margin-top: 3px; }
+  .card { background: var(--white); border: 1px solid var(--grey-light); border-radius: var(--radius); padding: 24px 26px; margin-bottom: 18px; }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  .form-group label { font-size: 11px; font-weight: 700; color: var(--grey-mid); letter-spacing: 0.4px; text-transform: uppercase; }
+  .form-group select { padding: 10px 12px; border: 1px solid var(--grey-light); border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--black); background: var(--bg); outline: none; transition: border 0.12s; appearance: none; cursor: pointer; }
+  .form-group select:focus { border-color: var(--red); background: var(--white); }
+  .hint { font-size: 11px; color: var(--grey-mid); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .kw-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; border: 1px solid var(--grey-light); border-radius: 7px; background: var(--bg); min-height: 44px; align-items: center; cursor: text; transition: all 0.12s; }
+  .kw-wrap:focus-within { border-color: var(--red); background: var(--white); }
+  .kw-tag { background: #FFF0F2; color: var(--red); border: 1px solid #FECDD3; border-radius: 5px; padding: 2px 8px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .kw-tag .kw-remove { background: none; border: none; color: var(--red); cursor: pointer; font-size: 15px; line-height: 1; padding: 0; opacity: 0.6; font-family: inherit; }
+  .kw-tag .kw-remove:hover { opacity: 1; }
+  #kw-input { border: none; background: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--black); flex: 1; min-width: 140px; }
+  .info-wrap { position: relative; display: inline-flex; align-items: center; }
+  .info-icon { width: 14px; height: 14px; border-radius: 50%; background: var(--grey-light); color: var(--grey-mid); font-size: 9px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; cursor: help; flex-shrink: 0; }
+  .info-icon:hover { background: var(--grey-mid); color: white; }
+  .tooltip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--black); color: white; font-size: 12px; font-weight: 400; padding: 7px 10px; border-radius: 6px; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.15s; line-height: 1.5; width: 210px; }
+  .tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--black); }
+  .info-wrap:hover .tooltip { opacity: 1; }
+  .toggles-section { border-top: 1px solid var(--grey-light); margin-top: 8px; padding-top: 8px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--grey-light); gap: 12px; }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-left { display: flex; align-items: center; gap: 7px; }
+  .toggle-label { font-size: 13.5px; font-weight: 500; }
+  .toggle { position: relative; width: 38px; height: 20px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--grey-light); border-radius: 20px; transition: 0.2s; }
+  .toggle-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+  input:checked + .toggle-slider { background: var(--red); }
+  input:checked + .toggle-slider:before { transform: translateX(18px); }
+  .blocklist-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn-upload { background: none; color: var(--grey-mid); border: 1px solid var(--grey-light); border-radius: 7px; padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.18s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-upload:hover { border-color: var(--black); color: var(--black); }
+  .btn-upload.uploaded { border-color: var(--success); color: #15803D; background: #F0FDF4; }
+  .btn-primary { background: var(--red); color: white; border: none; border-radius: 7px; padding: 10px 22px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: opacity 0.12s; display: inline-flex; align-items: center; gap: 7px; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-ghost { background: none; color: var(--grey-mid); border: 1px solid var(--grey-light); border-radius: 7px; padding: 9px 16px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.12s; }
+  .btn-ghost:hover { border-color: var(--black); color: var(--black); }
+  .btn-dark { background: var(--black); color: white; border: none; border-radius: 7px; padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.12s; }
+  .btn-dark:hover { opacity: 0.8; }
+  .btn-danger { background: none; color: #DC2626; border: 1px solid #FECACA; border-radius: 7px; padding: 7px 14px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; cursor: pointer; transition: background 0.12s; }
+  .btn-danger:hover { background: #FEF2F2; }
+  .btn-stop { background: none; color: #DC2626; border: 1px solid #FECACA; border-radius: 6px; padding: 5px 10px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.12s; display: inline-flex; align-items: center; gap: 4px; }
+  .btn-stop:hover { background: #FEF2F2; }
+  .btn-delete { background: none; color: var(--grey-mid); border: 1px solid var(--grey-light); border-radius: 6px; padding: 5px 10px; font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.12s; }
+  .btn-delete:hover { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
+  .form-actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--grey-light); }
+  .credit-info { margin-left: auto; font-size: 13px; color: var(--grey-mid); }
+  .credit-info strong { color: var(--black); }
+  .progress-card { display: none; }
+  .progress-card.show { display: block; }
+  .progress-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .progress-title { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600; }
+  .dot-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: dpulse 1.2s ease-in-out infinite; }
+  @keyframes dpulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.7); } }
+  .progress-stats { font-size: 12.5px; color: var(--grey-mid); display: flex; gap: 16px; flex-wrap: wrap; }
+  .progress-stats strong { color: var(--black); font-weight: 700; }
+  .pbar-wrap { height: 5px; background: var(--grey-light); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+  .pbar-fill { height: 100%; background: var(--red); border-radius: 2px; transition: width 0.5s ease; width: 0%; }
+  .progress-log { font-size: 12px; color: var(--grey-mid); }
+
+  #results-card { 
+    padding: 0; 
+    margin-top: 18px; 
+    border: 1px solid var(--grey-light); 
+    border-radius: var(--radius); 
+    overflow: hidden; 
+    background: var(--white);
+    display: block !important;
+  }
+  .results-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px; border-bottom: 1px solid var(--grey-light); flex-wrap: wrap; gap: 8px; background: var(--white); }
+  .results-header h2 { font-size: 14px; font-weight: 600; }
+  .results-meta { display: flex; align-items: center; gap: 8px; }
+  .badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--bg); border: 1px solid var(--grey-light); color: var(--grey-mid); }
+  .badge.green { background: #F0FDF4; border-color: #22C55E; color: #15803D; }
+  .table-wrap { overflow-x: auto; background: var(--white); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; padding: 9px 16px; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: var(--grey-mid); background: var(--bg); border-bottom: 1px solid var(--grey-light); white-space: nowrap; }
+  .th-inner { display: inline-flex; align-items: center; gap: 5px; }
+  tbody tr { border-bottom: 1px solid var(--grey-light); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #FAFAF8; }
+  tbody td { padding: 11px 16px; vertical-align: middle; }
+  .shop-name { font-weight: 600; font-size: 13px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shop-link { font-size: 11px; color: var(--grey-mid); text-decoration: none; display: block; margin-top: 1px; }
+  .shop-link:hover { color: var(--red); }
+  .email-val { font-size: 12.5px; max-width: 190px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .no-val { color: #D0CEC9; font-size: 12px; }
+  .platform-tag { padding: 2px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 700; border: 1px solid var(--grey-light); background: var(--bg); color: var(--grey-mid); }
+  .platform-tag.shopify { background: #F0FDF4; color: #15803D; border-color: #BBF7D0; }
+  .platform-tag.independent { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+  .platform-tag.etsy { background: #FFF7ED; color: #C2410C; border-color: #FED7AA; }
+  .platform-tag.pinterest { background: #FFF0F2; color: var(--red); border-color: #FECDD3; }
+  .socials { display: flex; gap: 4px; }
+  .social-btn { width: 22px; height: 22px; border-radius: 4px; background: var(--bg); border: 1px solid var(--grey-light); display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 9px; font-weight: 800; color: var(--grey-mid); transition: all 0.12s; }
+  .social-btn:hover { background: var(--black); color: white; border-color: var(--black); }
+  .empty-state { text-align: center; padding: 52px 24px; color: var(--grey-mid); font-size: 14px; }
+
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item { background: var(--white); border: 1px solid var(--grey-light); border-radius: var(--radius); padding: 14px 18px; display: flex; align-items: center; gap: 12px; transition: border-color 0.12s; }
+  .history-item:hover { border-color: #BDBDBD; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+  .status-dot.running { background: var(--red); animation: dpulse 1.2s infinite; }
+  .status-dot.stopped { background: var(--grey-light); }
+  .status-dot.failed { background: #DC2626; }
+  .history-kw { font-weight: 600; font-size: 13.5px; }
+  .history-meta { font-size: 11.5px; color: var(--grey-mid); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .history-actions { display: flex; gap: 5px; flex-shrink: 0; margin-left: auto; flex-wrap: wrap; }
+
+  .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .feature-card { background: var(--white); border: 1px solid var(--grey-light); border-radius: var(--radius); padding: 20px; }
+  .feature-tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-bottom: 10px; }
+  .feature-tag.soon { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
+  .feature-tag.planned { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+  .feature-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .feature-card p { font-size: 13px; color: var(--grey-mid); line-height: 1.6; }
+  .contact-card { background: var(--white); border: 1px solid var(--grey-light); border-radius: var(--radius); padding: 24px; }
+  .contact-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .contact-card p { font-size: 13px; color: var(--grey-mid); margin-bottom: 16px; line-height: 1.6; }
+  .contact-email { display: inline-flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--grey-light); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 500; text-decoration: none; color: var(--black); transition: border-color 0.12s; }
+  .contact-email:hover { border-color: var(--red); color: var(--red); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo" onclick="showPage('search')">
+    <span class="logo-text"><em>pin</em>panda<span class="beta">beta</span></span>
+  </div>
+  <div class="nav-label">Menu</div>
+  <div class="nav-item active" id="nav-search" onclick="showPage('search')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    New Search
+  </div>
+  <div class="nav-item" id="nav-history" onclick="showPage('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+    Past Searches
+  </div>
+  <div class="nav-item" id="nav-upcoming" onclick="showPage('upcoming')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Upcoming
+  </div>
+  <div class="sidebar-bottom">
+    <div class="credits-badge">
+      <div class="credits-top">
+        <div class="credits-label">Credits</div>
+      </div>
+      <div class="credits-amount">∞ <span>Unlimited</span></div>
+      <div class="credits-bar"><div class="credits-bar-fill" style="width:100%"></div></div>
+    </div>
+    <div class="user-row">
+      <div class="user-avatar" id="user-avatar-el">P</div>
+      <div style="flex:1; min-width: 0;">
+        <div class="user-name" id="user-name-el">PinPanda Beta</div>
+        <div class="user-plan" id="user-plan-el">Local Mode</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- NEW SEARCH -->
+  <div class="page active" id="page-search">
+    <div class="page-header">
+      <h1>New Search</h1>
+      <p id="search-subtitle">Type a niche keyword, pick how many profiles to scan, and let PinPanda do the work.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Search settings</div>
+
+      <div class="form-group">
+        <label>Keywords</label>
+        <div class="kw-wrap" id="kw-wrap" onclick="document.getElementById('kw-input').focus()">
+          <input id="kw-input" placeholder="Add keyword and press Enter" onkeydown="addKw(event)">
+        </div>
+        <div class="hint">Add multiple keywords to search across niches at once</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Profiles to scan</label>
+          <select id="limit-sel" onchange="updateCost()">
+            <option value="10">10 profiles</option>
+            <option value="30" selected>30 profiles</option>
+            <option value="50">50 profiles</option>
+            <option value="100">100 profiles</option>
+          </select>
+          <div class="hint">1 profile = 1 credit (unlimited in beta)</div>
+        </div>
+        <div class="form-group">
+          <label>Search mode</label>
+          <select id="fresh-sel">
+            <option value="true">Fresh search only</option>
+            <option value="false">Include previously seen</option>
+          </select>
+          <div class="hint">Fresh mode skips profiles already scraped before</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--grey-light)">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+          <label style="font-size:11px;font-weight:700;color:var(--grey-mid);letter-spacing:0.4px;text-transform:uppercase">Email skip list</label>
+          <div class="info-wrap">
+            <div class="info-icon">i</div>
+            <div class="tooltip">Upload a CSV of emails you already have or don't want to see. PinPanda will skip any profile that matches those emails.</div>
+          </div>
+        </div>
+        <div class="blocklist-row">
+          <input type="file" id="blocklist-file" accept=".csv" style="display:none" onchange="uploadBlocklist(this)">
+          <button class="btn-upload" id="upload-btn" onclick="document.getElementById('blocklist-file').click()">
+            <span id="upload-btn-label">Upload skip list</span>
+          </button>
+          <span id="blocklist-status" style="font-size:12px;color:var(--grey-mid)">No skip list loaded</span>
+          <button class="btn-ghost" style="font-size:12px;padding:6px 10px;margin-left:auto" onclick="clearBlocklist()">Clear</button>
+        </div>
+      </div>
+
+      <div class="toggles-section">
+        <div class="toggle-row">
+          <div class="toggle-left">
+            <span class="toggle-label">Emails only</span>
+            <div class="info-wrap">
+              <div class="info-icon">i</div>
+              <div class="tooltip">ON: keeps searching until it finds profiles with emails. OFF: returns all profiles whether they have emails or not.</div>
+            </div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="emails-only-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-left">
+            <span class="toggle-label">Run in background</span>
+            <div class="info-wrap">
+              <div class="info-icon">i</div>
+              <div class="tooltip">ON: runs silently in headless mode. OFF: opens a browser window while scraping.</div>
+            </div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="headless-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" id="start-btn" onclick="startSearch()" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg>
+          <span id="btn-label">Start Search</span>
+          <div class="spinner" id="btn-spin"></div>
+        </button>
+        <button class="btn-stop" id="stop-btn" onclick="stopCurrentJob()" style="display:none;padding:9px 16px;border-radius:7px;font-size:13.5px" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          Stop
+        </button>
+        <button class="btn-ghost" onclick="resetForm()" type="button">Reset</button>
+        <div class="credit-info" id="credit-info-cost">Uses <strong id="cost-count">30</strong> credits (beta: unlimited)</div>
+      </div>
+    </div>
+
+    <div class="card progress-card" id="progress-card">
+      <div class="progress-top">
+        <div class="progress-title"><div class="dot-pulse"></div>Searching Pinterest...</div>
+        <div class="progress-stats">
+          <span><strong id="p-found">0</strong> scraped</span>
+          <span><strong id="p-emails">0</strong> emails</span>
+          <span>Running for <strong id="p-time">0:00</strong></span>
+          <span>About <strong id="p-eta">calculating...</strong> left</span>
+        </div>
+      </div>
+      <div class="pbar-wrap"><div class="pbar-fill" id="pbar"></div></div>
+      <div class="progress-log" id="p-log">Connecting to Pinterest...</div>
+    </div>
+
+    <!-- RESULTS CARD -->
+    <div id="results-card">
+      <div class="results-header">
+        <h2>Results</h2>
+        <div class="results-meta">
+          <span class="badge" id="b-total">0 profiles</span>
+          <span class="badge green" id="b-emails">0 emails</span>
+          <button class="btn-dark" onclick="exportCSV()" type="button">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Shop</th>
+              <th>Email</th>
+              <th>Website</th>
+              <th>
+                <div class="th-inner">Platform
+                  <div class="info-wrap">
+                    <div class="info-icon">i</div>
+                    <div class="tooltip">Where the seller runs their store. Independent = own website. Pinterest only = no external site found.</div>
+                  </div>
+                </div>
+              </th>
+              <th>Socials</th>
+            </tr>
+          </thead>
+          <tbody id="results-body">
+            <tr><td colspan="5"><div class="empty-state">Run a search to see leads here</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAST SEARCHES -->
+  <div class="page" id="page-history">
+    <div class="page-header">
+      <h1>Past Searches</h1>
+      <p>View, export, stop, or delete your previous searches.</p>
+    </div>
+    <div class="history-list" id="history-list">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+
+  <!-- UPCOMING -->
+  <div class="page" id="page-upcoming">
+    <div class="page-header">
+      <h1>Upcoming Features</h1>
+      <p>Here is what is coming to PinPanda next.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-tag soon">Coming soon</div>
+        <h4>Phone number extraction</h4>
+        <p>PinPanda will also pull phone numbers from profiles and websites alongside emails.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-tag soon">Coming soon</div>
+        <h4>Proxy support</h4>
+        <p>Route searches through residential proxies to protect your Pinterest account and run more searches safely.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-tag planned">Planned</div>
+        <h4>Email verification</h4>
+        <p>Verify extracted emails are live before you export so your outreach list stays clean.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-tag planned">Planned</div>
+        <h4>Scheduled searches</h4>
+        <p>Set PinPanda to run searches automatically on a schedule and get fresh leads delivered to your inbox.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-tag planned">Planned</div>
+        <h4>Instagram scraper</h4>
+        <p>Expand beyond Pinterest and scrape seller profiles directly from Instagram niches.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-tag planned">Planned</div>
+        <h4>CRM integration</h4>
+        <p>Push leads straight into your CRM of choice without ever touching a CSV file.</p>
+      </div>
+    </div>
+    <div class="contact-card">
+      <h3>Got a feature request?</h3>
+      <p>Reach out directly and I will add it to the roadmap.</p>
+      <a href="mailto:salemkalonji.m@gmail.com" class="contact-email">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+        salemkalonji.m@gmail.com
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const API = 'http://localhost:8000/api';
+let currentJob = null;
+let pollInterval = null;
+let startTime = null;
+let timerInterval = null;
+let currentLimit = 30;
+let cachedLeads = [];
+
+// ── NAV ───────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-' + name);
+  if (pg) pg.classList.add('active');
+  const nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
+  if (name === 'history') loadHistory();
+}
+
+// ── KEYWORDS ──────────────────────────────────────────────────
+let keywords = [];
+
+function addKw(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const val = e.target.value.trim();
+  if (val && !keywords.includes(val)) {
+    keywords.push(val);
+    renderKw();
+  }
+  e.target.value = '';
+}
+
+function removeKw(kw) {
+  keywords = keywords.filter(k => k !== kw);
+  renderKw();
+}
+
+function renderKw() {
+  const wrap = document.getElementById('kw-wrap');
+  wrap.querySelectorAll('.kw-tag').forEach(t => t.remove());
+  const input = document.getElementById('kw-input');
+  keywords.forEach(kw => {
+    const tag = document.createElement('div');
+    tag.className = 'kw-tag';
+    const label = document.createTextNode(kw + ' ');
+    const btn = document.createElement('button');
+    btn.className = 'kw-remove';
+    btn.textContent = 'x';
+    btn.type = 'button';
+    btn.onclick = function() { removeKw(kw); };
+    tag.appendChild(label);
+    tag.appendChild(btn);
+    wrap.insertBefore(tag, input);
+  });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function updateCost() {
+  const val = document.getElementById('limit-sel').value;
+  document.getElementById('cost-count').textContent = val;
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+function getPlatformTag(platform) {
+  if (!platform) return '<span class="platform-tag pinterest">Pinterest only</span>';
+  const cls = platform.toLowerCase().replace(/\s+/g, '');
+  return `<span class="platform-tag ${cls}">${platform}</span>`;
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderLeadRow(l) {
+  return `
+    <tr>
+      <td>
+        <div class="shop-name" title="${esc(l.shop_name)}">${esc(l.shop_name)}</div>
+        <a class="shop-link" href="${esc(l.pinterest_url)}" target="_blank">View on Pinterest</a>
+      </td>
+      <td>${l.email ? `<div class="email-val" title="${esc(l.email)}">${esc(l.email)}</div>` : '<span class="no-val">Not found</span>'}</td>
+      <td>${l.website ? `<a href="${esc(l.website)}" target="_blank" style="font-size:12px;color:var(--black);text-decoration:none">${esc(l.website.replace(/https?:\/\//,'').slice(0,22))}${l.website.length>26?'...':''}</a>` : '<span class="no-val">None</span>'}</td>
+      <td>${getPlatformTag(l.platform)}</td>
+      <td><div class="socials">
+        ${l.instagram ? `<a class="social-btn" href="${esc(l.instagram)}" target="_blank">IG</a>` : ''}
+        ${l.tiktok    ? `<a class="social-btn" href="${esc(l.tiktok)}"    target="_blank">TK</a>` : ''}
+        ${l.facebook  ? `<a class="social-btn" href="${esc(l.facebook)}"  target="_blank">FB</a>` : ''}
+        ${l.youtube   ? `<a class="social-btn" href="${esc(l.youtube)}"   target="_blank">YT</a>` : ''}
+      </div></td>
+    </tr>
+  `;
+}
+
+// ── RESULTS DISPLAY ──────────────────────────────────────────
+function updateResultsUI(leads) {
+  const tbody = document.getElementById('results-body');
+  const emailCount = leads.filter(l => l.email).length;
+  
+  document.getElementById('b-total').textContent = leads.length + ' profiles';
+  document.getElementById('b-emails').textContent = emailCount + ' emails';
+  
+  if (!leads.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">No leads found yet. Search is still running...</div></td></tr>';
+    return;
+  }
+  
+  if (leads.length !== cachedLeads.length || 
+      (leads.length > 0 && cachedLeads.length > 0 && leads[0].shop_name !== cachedLeads[0].shop_name)) {
+    cachedLeads = leads;
+    tbody.innerHTML = leads.map(renderLeadRow).join('');
+  }
+}
+
+async function loadResults(jobId) {
+  try {
+    const r = await fetch(API + '/jobs/' + jobId + '/leads');
+    if (!r.ok) throw new Error('Failed to load leads');
+    const leads = await r.json();
+    updateResultsUI(leads);
+    return leads;
+  } catch(e) {
+    console.error('Load results error:', e);
+    return [];
+  }
+}
+
+async function exportCSV() {
+  if (!currentJob) {
+    alert('No job selected to export.');
+    return;
+  }
+  try {
+    const r = await fetch(API + '/jobs/' + currentJob + '/export');
+    if (!r.ok) throw new Error('export failed');
+    const blob = await r.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pinpanda_leads_' + currentJob + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Could not export CSV.');
+  }
+}
+
+// ── SEARCH ────────────────────────────────────────────────────
+async function startSearch() {
+  if (!keywords.length) {
+    alert('Add at least one keyword first.');
+    return;
+  }
+  
+  const limit = parseInt(document.getElementById('limit-sel').value);
+  currentLimit = limit;
+  const fresh = document.getElementById('fresh-sel').value === 'true';
+  const emailsOnly = document.getElementById('emails-only-toggle').checked;
+  const headless = document.getElementById('headless-toggle').checked;
+
+  const startBtn = document.getElementById('start-btn');
+  const btnLabel = document.getElementById('btn-label');
+  const btnSpin = document.getElementById('btn-spin');
+  const stopBtn = document.getElementById('stop-btn');
+  const progressCard = document.getElementById('progress-card');
+
+  startBtn.disabled = true;
+  btnLabel.textContent = 'Starting...';
+  btnSpin.style.display = 'block';
+  cachedLeads = [];
+
+  progressCard.classList.add('show');
+  document.getElementById('p-log').textContent = '⏳ Starting search...';
+  document.getElementById('pbar').style.width = '0%';
+  document.getElementById('p-found').textContent = '0';
+  document.getElementById('p-emails').textContent = '0';
+  document.getElementById('p-time').textContent = '0:00';
+  document.getElementById('p-eta').textContent = 'calculating...';
+
+  try {
+    const r = await fetch(API + '/jobs/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keywords, limit, fresh, emails_only: emailsOnly, headless })
+    });
+
+    if (!r.ok) throw new Error('Bad response: ' + r.status);
+    const data = await r.json();
+    
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    
+    currentJob = data.job_id;
+    document.getElementById('search-subtitle').textContent = 'Job #' + currentJob + ' is running...';
+    document.getElementById('p-log').textContent = '🔍 Connecting to Pinterest...';
+    btnLabel.textContent = 'Running...';
+    stopBtn.style.display = 'inline-flex';
+    
+    startTime = Date.now();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      document.getElementById('p-time').textContent = formatTime(elapsed);
+    }, 1000);
+    
+    await loadResults(currentJob);
+    
+    pollInterval = setInterval(() => pollJob(currentJob, limit), 2000);
+    
+  } catch(err) {
+    alert('Could not connect to the backend server. Make sure python run.py is running.');
+    startBtn.disabled = false;
+    btnLabel.textContent = 'Start Search';
+    btnSpin.style.display = 'none';
+    progressCard.classList.remove('show');
+    document.getElementById('p-log').textContent = '❌ Failed to start search';
+  }
+}
+
+async function pollJob(jobId, limit) {
+  if (jobId !== currentJob) {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    return;
+  }
+  
+  try {
+    const r = await fetch(API + '/jobs/' + jobId + '/status');
+    const d = await r.json();
+    
+    const pct = Math.min((d.leads_found / limit) * 100, 100);
+    document.getElementById('pbar').style.width = pct + '%';
+    document.getElementById('p-found').textContent = d.leads_found;
+    document.getElementById('p-emails').textContent = d.emails_found || 0;
+    
+    if (d.status === 'running') {
+      document.getElementById('p-log').textContent = '🔍 Scraped ' + d.leads_found + ' of ' + limit + ' profiles...';
+    } else if (d.status === 'done') {
+      document.getElementById('p-log').textContent = '✅ Complete! Found ' + d.leads_found + ' profiles, ' + (d.emails_found || 0) + ' emails.';
+    } else if (d.status === 'stopped') {
+      document.getElementById('p-log').textContent = '⏹️ Stopped.';
+    }
+    
+    if (d.leads_found > 0 && d.status === 'running' && startTime) {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const rate = d.leads_found / elapsed;
+      const remaining = Math.max(0, (limit - d.leads_found) / rate);
+      document.getElementById('p-eta').textContent = remaining > 0 ? formatTime(Math.round(remaining)) : 'almost done';
+    }
+    
+    if (d.leads_found > 0) {
+      await loadResults(jobId);
+    }
+    
+    if (['done', 'failed', 'stopped'].includes(d.status)) {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+      clearInterval(timerInterval);
+      document.getElementById('progress-card').classList.remove('show');
+      document.getElementById('start-btn').disabled = false;
+      document.getElementById('btn-label').textContent = 'Start Search';
+      document.getElementById('btn-spin').style.display = 'none';
+      document.getElementById('stop-btn').style.display = 'none';
+      document.getElementById('search-subtitle').textContent = 'Job #' + jobId + ' complete. ' + d.leads_found + ' profiles found.';
+      await loadResults(jobId);
+    }
+  } catch(e) {
+    console.error('Poll error:', e);
+  }
+}
+
+async function stopCurrentJob() {
+  if (!currentJob) return;
+  try {
+    await fetch(API + '/jobs/' + currentJob + '/stop', { method: 'POST' });
+  } catch(e) {}
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+  clearInterval(timerInterval);
+  document.getElementById('progress-card').classList.remove('show');
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('btn-label').textContent = 'Start Search';
+  document.getElementById('btn-spin').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'none';
+  if (currentJob) {
+    await loadResults(currentJob);
+    document.getElementById('search-subtitle').textContent = 'Job #' + currentJob + ' stopped.';
+  }
+}
+
+// ── HISTORY ───────────────────────────────────────────────────
+async function loadHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const r = await fetch(API + '/jobs');
+    const jobs = await r.json();
+    if (!jobs.length) {
+      list.innerHTML = '<div class="empty-state">No searches yet. Run your first one!</div>';
+      return;
+    }
+    list.innerHTML = jobs.map(j => {
+      const isRunning = j.status === 'running';
+      const dotClass = isRunning ? 'running' : j.status === 'stopped' ? 'stopped' : j.status === 'failed' ? 'failed' : '';
+      return `
+        <div class="history-item" id="hitem-${j.job_id}">
+          <div class="status-dot ${dotClass}"></div>
+          <div style="flex:1;min-width:0">
+            <div class="history-kw">${esc(j.keyword || 'Search')}</div>
+            <div class="history-meta">
+              <span>${j.leads_found || 0} profiles</span>
+              <span>${j.emails_found || 0} emails</span>
+              <span>${j.status}</span>
+            </div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-dark" onclick="viewJob(${j.job_id})" type="button">View</button>
+            <button class="btn-ghost" style="font-size:12px;padding:6px 10px" onclick="downloadCsv(${j.job_id})" type="button">CSV</button>
+            ${isRunning ? `<button class="btn-stop" onclick="stopJob(${j.job_id})" type="button">Stop</button>` : ''}
+            <button class="btn-delete" onclick="deleteJob(${j.job_id})" type="button">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">Could not load history. Make sure the server is running.</div>';
+  }
+}
+
+async function downloadCsv(jobId) {
+  try {
+    const r = await fetch(API + '/jobs/' + jobId + '/export');
+    if (!r.ok) throw new Error('export failed');
+    const blob = await r.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pinpanda_leads_' + jobId + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Could not export CSV.');
+  }
+}
+
+async function viewJob(jobId) {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+  clearInterval(timerInterval);
+  cachedLeads = [];
+  
+  currentJob = jobId;
+  showPage('search');
+  document.getElementById('search-subtitle').textContent = 'Showing results for job #' + jobId;
+  document.getElementById('progress-card').classList.remove('show');
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('btn-label').textContent = 'Start Search';
+  document.getElementById('btn-spin').style.display = 'none';
+  
+  await loadResults(jobId);
+  
+  try {
+    const r = await fetch(API + '/jobs/' + jobId + '/status');
+    const d = await r.json();
+    if (d.status === 'running') {
+      document.getElementById('search-subtitle').textContent = 'Job #' + jobId + ' is running...';
+      document.getElementById('progress-card').classList.add('show');
+      document.getElementById('stop-btn').style.display = 'inline-flex';
+      const limit = d.leads_found + 10 || 30;
+      currentLimit = limit;
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('p-time').textContent = formatTime(elapsed);
+      }, 1000);
+      pollInterval = setInterval(() => pollJob(jobId, limit), 2000);
+    }
+  } catch(e) {}
+}
+
+async function stopJob(jobId) {
+  try { 
+    await fetch(API + '/jobs/' + jobId + '/stop', { method: 'POST' }); 
+  } catch(e) {}
+  loadHistory();
+  if (currentJob === jobId) {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    clearInterval(timerInterval);
+    document.getElementById('progress-card').classList.remove('show');
+    document.getElementById('stop-btn').style.display = 'none';
+    await loadResults(jobId);
+    document.getElementById('search-subtitle').textContent = 'Job #' + jobId + ' stopped.';
+  }
+}
+
+async function deleteJob(jobId) {
+  try { 
+    await fetch(API + '/jobs/' + jobId, { method: 'DELETE' }); 
+  } catch(e) {}
+  const el = document.getElementById('hitem-' + jobId);
+  if (el) el.remove();
+  if (currentJob === jobId) { 
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    clearInterval(timerInterval);
+    currentJob = null;
+    cachedLeads = [];
+    document.getElementById('results-body').innerHTML = '<tr><td colspan="5"><div class="empty-state">Run a search to see leads here</div></td></tr>';
+    document.getElementById('b-total').textContent = '0 profiles';
+    document.getElementById('b-emails').textContent = '0 emails';
+    document.getElementById('search-subtitle').textContent = 'Type a niche keyword, pick how many profiles to scan, and let PinPanda do the work.';
+    document.getElementById('progress-card').classList.remove('show');
+    document.getElementById('stop-btn').style.display = 'none';
+    document.getElementById('start-btn').disabled = false;
+    document.getElementById('btn-label').textContent = 'Start Search';
+    document.getElementById('btn-spin').style.display = 'none';
+  }
+}
+
+// ── FORM UTILS ────────────────────────────────────────────────
+function resetForm() {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+  clearInterval(timerInterval);
+  cachedLeads = [];
+  
+  keywords = [];
+  renderKw();
+  document.getElementById('kw-input').value = '';
+  document.getElementById('limit-sel').value = '30';
+  document.getElementById('progress-card').classList.remove('show');
+  document.getElementById('results-body').innerHTML = '<tr><td colspan="5"><div class="empty-state">Run a search to see leads here</div></td></tr>';
+  document.getElementById('b-total').textContent = '0 profiles';
+  document.getElementById('b-emails').textContent = '0 emails';
+  document.getElementById('search-subtitle').textContent = 'Type a niche keyword, pick how many profiles to scan, and let PinPanda do the work.';
+  currentJob = null;
+  updateCost();
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('btn-label').textContent = 'Start Search';
+  document.getElementById('btn-spin').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'none';
+}
+
+async function uploadBlocklist(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const btn = document.getElementById('upload-btn');
+  const label = document.getElementById('upload-btn-label');
+  const status = document.getElementById('blocklist-status');
+  btn.disabled = true;
+  label.textContent = 'Uploading...';
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const r = await fetch(API + '/blocklist/upload', { method: 'POST', body: form });
+    const d = await r.json();
+    btn.classList.add('uploaded');
+    label.textContent = file.name;
+    status.textContent = d.emails_blocked + ' emails in skip list';
+    status.style.color = 'var(--success)';
+  } catch(e) {
+    label.textContent = 'Upload skip list';
+    status.textContent = 'Upload failed';
+    status.style.color = '#DC2626';
+  }
+  btn.disabled = false;
+}
+
+async function clearBlocklist() {
+  try { 
+    await fetch(API + '/blocklist/clear', { method: 'DELETE' }); 
+  } catch(e) {}
+  const btn = document.getElementById('upload-btn');
+  btn.classList.remove('uploaded');
+  document.getElementById('upload-btn-label').textContent = 'Upload skip list';
+  document.getElementById('blocklist-status').textContent = 'No skip list loaded';
+  document.getElementById('blocklist-status').style.color = 'var(--grey-mid)';
+  document.getElementById('blocklist-file').value = '';
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.getElementById('user-avatar-el').textContent = 'P';
+document.getElementById('user-name-el').textContent = 'PinPanda Beta';
+document.getElementById('user-plan-el').textContent = 'Local Mode';
+updateCost();
+
+async function checkRunningJobs() {
+  try {
+    const r = await fetch(API + '/jobs');
+    const jobs = await r.json();
+    const running = jobs.find(j => j.status === 'running');
+    if (running) {
+      currentJob = running.job_id;
+      cachedLeads = [];
+      document.getElementById('search-subtitle').textContent = 'Job #' + currentJob + ' is running...';
+      document.getElementById('progress-card').classList.add('show');
+      document.getElementById('stop-btn').style.display = 'inline-flex';
+      await loadResults(currentJob);
+      const limit = running.leads_found + 10 || 30;
+      currentLimit = limit;
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('p-time').textContent = formatTime(elapsed);
+      }, 1000);
+      pollInterval = setInterval(() => pollJob(currentJob, limit), 2000);
+    }
+  } catch(e) {}
+}
+checkRunningJobs();
+</script>
+</body>
+</html>
